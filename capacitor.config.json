@@ -1,0 +1,6 @@
+{
+  "appId": "com.cepforge.mobile",
+  "appName": "CepForge",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}

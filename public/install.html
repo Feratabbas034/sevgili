@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0f172a" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <title>Install CepForge</title>
+    <style>
+      :root {
+        font-family: 'IBM Plex Sans', system-ui, sans-serif;
+      }
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        color: #f8fbff;
+        background:
+          radial-gradient(circle at 15% 10%, rgba(255, 159, 67, 0.18), transparent 28%),
+          radial-gradient(circle at 82% 12%, rgba(125, 211, 252, 0.16), transparent 24%),
+          linear-gradient(160deg, #050816 0%, #0b1020 55%, #070a12 100%);
+      }
+      .card {
+        width: min(560px, calc(100% - 32px));
+        border-radius: 28px;
+        padding: 24px;
+        background: rgba(10, 15, 28, 0.86);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+      }
+      h1 {
+        margin: 0 0 10px;
+        font-size: 34px;
+      }
+      p {
+        color: rgba(248, 251, 255, 0.72);
+        line-height: 1.6;
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin: 18px 0 10px;
+      }
+      button,
+      a {
+        border-radius: 999px;
+        padding: 11px 14px;
+        text-decoration: none;
+        font-weight: 700;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      button {
+        background: linear-gradient(135deg, #ff9f43, #ffd166);
+        color: #17110c;
+      }
+      a {
+        color: #f8fbff;
+        background: rgba(255, 255, 255, 0.04);
+      }
+      #status {
+        margin-top: 12px;
+        font-family: 'IBM Plex Mono', monospace;
+        color: rgba(248, 251, 255, 0.7);
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <h1>Install CepForge</h1>
+      <p>Install this studio to keep the vibe-coding workspace on your device and launch it like a native app.</p>
+      <div class="actions">
+        <button id="installBtn" disabled>Install app</button>
+        <button id="shareBtn" type="button">Share link</button>
+        <a href="/">Open app</a>
+      </div>
+      <p id="status">Checking install availability...</p>
+    </main>
+
+    <script>
+      let deferredPrompt = null;
+      const installBtn = document.getElementById('installBtn');
+      const shareBtn = document.getElementById('shareBtn');
+      const statusEl = document.getElementById('status');
+
+      const shareData = {
+        title: 'CepForge',
+        text: 'Install CepForge, the mobile vibe coding studio.',
+        url: location.origin + '/',
+      };
+
+      window.addEventListener('beforeinstallprompt', (event) => {
+        event.preventDefault();
+        deferredPrompt = event;
+        installBtn.disabled = false;
+        statusEl.textContent = 'Install prompt is available.';
+      });
+
+      installBtn.addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const result = await deferredPrompt.userChoice;
+        statusEl.textContent = result.outcome === 'accepted' ? 'Install accepted.' : 'Install dismissed.';
+        deferredPrompt = null;
+        installBtn.disabled = true;
+      });
+
+      shareBtn.addEventListener('click', async () => {
+        try {
+          if (navigator.share) {
+            await navigator.share(shareData);
+            statusEl.textContent = 'Shared via native share sheet.';
+            return;
+          }
+          await navigator.clipboard.writeText(shareData.url);
+          statusEl.textContent = 'Link copied to clipboard.';
+        } catch {
+          statusEl.textContent = 'Share is unavailable right now.';
+        }
+      });
+
+      window.addEventListener('appinstalled', () => {
+        statusEl.textContent = 'App installed successfully.';
+        installBtn.disabled = true;
+      });
+
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      }
+
+      setTimeout(() => {
+        if (!deferredPrompt && statusEl.textContent === 'Checking install availability...') {
+          statusEl.textContent = 'Use Chrome on HTTPS to receive the install prompt.';
+        }
+      }, 2000);
+    </script>
+  </body>
+</html>
